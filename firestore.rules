@@ -1,0 +1,210 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Safety Net: Deny all access by default
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Primitive Helpers ---
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(userId) {
+      return isVerifiedUser() && request.auth.uid == userId;
+    }
+
+    function isValidDifficulty(diff) {
+      return diff is string && diff in ['easy', 'medium', 'hard'];
+    }
+
+    function maxRoundScoreFor(diff) {
+      return diff == 'easy' ? 800 : (diff == 'medium' ? 1000 : 1250);
+    }
+
+    function isValidDateString(d) {
+      return d is string && d.size() == 10 && d.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$');
+    }
+
+    // --- Validation Blueprints ---
+    function isValidUserProfile(data, userId) {
+      return data.keys().hasAll([
+          'uid', 'displayName', 'gamesPlayed', 'quickPlays',
+          'bestScore', 'totalPoints', 'dailyStreak', 'lastDailyDate',
+          'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'uid', 'displayName', 'gamesPlayed', 'quickPlays',
+          'bestScore', 'totalPoints', 'dailyStreak', 'lastDailyDate',
+          'createdAt', 'updatedAt'
+        ])
+        && data.uid is string && data.uid == request.auth.uid && data.uid == userId
+        && data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 40
+        && data.gamesPlayed is int && data.gamesPlayed >= 0 && data.gamesPlayed <= 100000
+        && data.quickPlays is int && data.quickPlays >= 0 && data.quickPlays <= 100000
+        && data.bestScore is int && data.bestScore >= 0 && data.bestScore <= 3750
+        && data.totalPoints is int && data.totalPoints >= 0 && data.totalPoints <= 500000000
+        && data.dailyStreak is int && data.dailyStreak >= 0 && data.dailyStreak <= 10000
+        && data.lastDailyDate is string && (data.lastDailyDate.size() == 0 || isValidDateString(data.lastDailyDate))
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidLeaderboardEntry(data, userId) {
+      return data.keys().hasAll([
+          'uid', 'displayName', 'totalScore', 'avgErrorPct', 'difficulty',
+          'gamesPlayed', 'round1Score', 'round2Score', 'round3Score',
+          'isPublic', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'uid', 'displayName', 'totalScore', 'avgErrorPct', 'difficulty',
+          'gamesPlayed', 'round1Score', 'round2Score', 'round3Score',
+          'isPublic', 'createdAt', 'updatedAt'
+        ])
+        && data.uid is string && data.uid == request.auth.uid && data.uid == userId
+        && data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 40
+        && isValidDifficulty(data.difficulty)
+        && data.round1Score is int && data.round1Score >= 0 && data.round1Score <= maxRoundScoreFor(data.difficulty)
+        && data.round2Score is int && data.round2Score >= 0 && data.round2Score <= maxRoundScoreFor(data.difficulty)
+        && data.round3Score is int && data.round3Score >= 0 && data.round3Score <= maxRoundScoreFor(data.difficulty)
+        && data.totalScore is int && data.totalScore >= 0 && data.totalScore <= (maxRoundScoreFor(data.difficulty) * 3)
+        && data.totalScore == data.round1Score + data.round2Score + data.round3Score
+        && data.avgErrorPct is number && data.avgErrorPct >= 0 && data.avgErrorPct <= 100
+        && data.gamesPlayed is int && data.gamesPlayed >= 1 && data.gamesPlayed <= 100000
+        && data.isPublic is bool && data.isPublic == true
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidDailyLeaderboardEntry(data, entryId) {
+      return data.keys().hasAll([
+          'uid', 'displayName', 'dailyDate', 'difficulty', 'totalScore',
+          'avgErrorPct', 'round1Score', 'round2Score', 'round3Score',
+          'isPublic', 'createdAt'
+        ])
+        && data.keys().hasOnly([
+          'uid', 'displayName', 'dailyDate', 'difficulty', 'totalScore',
+          'avgErrorPct', 'round1Score', 'round2Score', 'round3Score',
+          'isPublic', 'createdAt'
+        ])
+        && data.uid is string && data.uid == request.auth.uid
+        && data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 40
+        && isValidDateString(data.dailyDate)
+        && entryId == data.dailyDate + '_' + request.auth.uid
+        && isValidDifficulty(data.difficulty)
+        && data.round1Score is int && data.round1Score >= 0 && data.round1Score <= maxRoundScoreFor(data.difficulty)
+        && data.round2Score is int && data.round2Score >= 0 && data.round2Score <= maxRoundScoreFor(data.difficulty)
+        && data.round3Score is int && data.round3Score >= 0 && data.round3Score <= maxRoundScoreFor(data.difficulty)
+        && data.totalScore is int && data.totalScore >= 0 && data.totalScore <= (maxRoundScoreFor(data.difficulty) * 3)
+        && data.totalScore == data.round1Score + data.round2Score + data.round3Score
+        && data.avgErrorPct is number && data.avgErrorPct >= 0 && data.avgErrorPct <= 100
+        && data.isPublic is bool && data.isPublic == true
+        && data.createdAt is timestamp;
+    }
+
+    // --- Collection: /users/{userId} (Private Player Stats) ---
+    match /users/{userId} {
+      allow get: if isValidId(userId) && isOwner(userId);
+      allow list: if false;
+
+      allow create: if isValidId(userId)
+        && isOwner(userId)
+        && isValidUserProfile(incoming(), userId)
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+
+      allow update: if isValidId(userId)
+        && isOwner(userId)
+        && isValidUserProfile(incoming(), userId)
+        && incoming().uid == existing().uid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          // Action: Update player stats after a game or quick play
+          (incoming().diff(existing()).affectedKeys().hasOnly([
+            'displayName', 'gamesPlayed', 'quickPlays',
+            'bestScore', 'totalPoints', 'dailyStreak', 'lastDailyDate', 'updatedAt'
+          ])
+          && incoming().gamesPlayed >= existing().gamesPlayed
+          && incoming().quickPlays >= existing().quickPlays
+          && incoming().bestScore >= existing().bestScore
+          && incoming().totalPoints >= existing().totalPoints)
+          ||
+          // Action: Rename display name only
+          (incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'updatedAt']))
+        );
+
+      allow delete: if false;
+    }
+
+    // --- Collection: /leaderboard/{userId} (Global All-Time High Scores) ---
+    match /leaderboard/{userId} {
+      allow get: if isValidId(userId) && existing().isPublic == true;
+      allow list: if existing().totalScore >= 0
+        && existing().totalScore <= 3750
+        && request.query.limit <= 50;
+
+      allow create: if isValidId(userId)
+        && isOwner(userId)
+        && isValidLeaderboardEntry(incoming(), userId)
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+
+      allow update: if isValidId(userId)
+        && isOwner(userId)
+        && isValidLeaderboardEntry(incoming(), userId)
+        && incoming().uid == existing().uid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          // Action: Post new personal best or increment games played
+          (incoming().diff(existing()).affectedKeys().hasOnly([
+            'displayName', 'totalScore', 'avgErrorPct', 'difficulty',
+            'gamesPlayed', 'round1Score', 'round2Score', 'round3Score', 'updatedAt'
+          ])
+          && incoming().totalScore >= existing().totalScore
+          && incoming().gamesPlayed >= existing().gamesPlayed)
+          ||
+          // Action: Update display name only
+          (incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'updatedAt']))
+        );
+
+      allow delete: if false;
+    }
+
+    // --- Collection: /dailyLeaderboard/{entryId} (Immutable Daily Basket Scores) ---
+    match /dailyLeaderboard/{entryId} {
+      allow get: if isValidId(entryId) && existing().isPublic == true;
+      allow list: if existing().dailyDate >= '2020-01-01'
+        && existing().dailyDate <= '2099-12-31'
+        && request.query.limit <= 50;
+
+      allow create: if isValidId(entryId)
+        && isVerifiedUser()
+        && isValidDailyLeaderboardEntry(incoming(), entryId)
+        && incoming().createdAt == request.time;
+
+      allow update: if false;
+      allow delete: if false;
+    }
+  }
+}

@@ -1,0 +1,57 @@
+@import "tailwindcss";
+
+@theme {
+  --font-display: "Outfit", system-ui, -apple-system, sans-serif;
+  --font-sans: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+@layer base {
+  body {
+    font-family: var(--font-sans);
+    background-color: #f4f6f9;
+    color: #0f1d36;
+  }
+
+  h1, h2, h3, .font-display {
+    font-family: var(--font-display);
+  }
+}
+
+/* Serrated thermal supermarket till receipt bottom edge */
+.receipt-serrated {
+  position: relative;
+}
+
+.receipt-serrated::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -8px;
+  height: 8px;
+  background:
+    linear-gradient(135deg, #ffffff 33.33%, transparent 33.33%) 0 0,
+    linear-gradient(225deg, #ffffff 33.33%, transparent 33.33%) 0 0;
+  background-size: 14px 14px;
+  background-repeat: repeat-x;
+}
+
+/* Subtle UK supermarket chevron brand mark underline */
+.teksco-chevrons {
+  background-image: repeating-linear-gradient(
+    -55deg,
+    #00539f 0px,
+    #00539f 7px,
+    transparent 7px,
+    transparent 11px
+  );
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "name": "TEKSCOdle",
+  "description": "Guess UK supermarket basket prices across 1, 3, and 5 item rounds to earn accuracy points and climb the global leaderboard.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

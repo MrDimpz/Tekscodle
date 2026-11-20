@@ -1,0 +1,237 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Private player statistics and progression record owned strictly by the authenticated user.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "Firebase Auth UID of the player."
+        },
+        "displayName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40,
+          "description": "Player's public supermarket nickname."
+        },
+        "gamesPlayed": {
+          "type": "number",
+          "description": "Total completed 3-round games played."
+        },
+        "quickPlays": {
+          "type": "number",
+          "description": "Total completed Quick Play rounds."
+        },
+        "bestScore": {
+          "type": "number",
+          "description": "Highest 3-round score achieved (0 to 3750)."
+        },
+        "totalPoints": {
+          "type": "number",
+          "description": "Cumulative lifetime points earned."
+        },
+        "dailyStreak": {
+          "type": "number",
+          "description": "Consecutive days completing the Daily Basket."
+        },
+        "lastDailyDate": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 10,
+          "description": "Last completed daily basket date (YYYY-MM-DD or empty)."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when profile was created."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when profile was last updated."
+        }
+      },
+      "required": [
+        "uid",
+        "displayName",
+        "gamesPlayed",
+        "quickPlays",
+        "bestScore",
+        "totalPoints",
+        "dailyStreak",
+        "lastDailyDate",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "LeaderboardEntry": {
+      "title": "LeaderboardEntry",
+      "description": "Public all-time best score entry for a player on the TEKSCOdle global leaderboard (contains no PII).",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "Firebase Auth UID of the player."
+        },
+        "displayName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40,
+          "description": "Display name shown on the global leaderboard."
+        },
+        "totalScore": {
+          "type": "number",
+          "description": "Best 3-round total score (0 to 3750)."
+        },
+        "avgErrorPct": {
+          "type": "number",
+          "description": "Average percentage error across the best run (0 to 100)."
+        },
+        "difficulty": {
+          "type": "string",
+          "enum": ["easy", "medium", "hard"],
+          "description": "Difficulty level of the best run."
+        },
+        "gamesPlayed": {
+          "type": "number",
+          "description": "Total completed games."
+        },
+        "round1Score": {
+          "type": "number",
+          "description": "Score in the 1-item round (0 to 1250)."
+        },
+        "round2Score": {
+          "type": "number",
+          "description": "Score in the 3-item round (0 to 1250)."
+        },
+        "round3Score": {
+          "type": "number",
+          "description": "Score in the 5-item round (0 to 1250)."
+        },
+        "isPublic": {
+          "type": "boolean",
+          "description": "Always true to explicitly mark leaderboard entries as public."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when entry was created."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when entry was last updated."
+        }
+      },
+      "required": [
+        "uid",
+        "displayName",
+        "totalScore",
+        "avgErrorPct",
+        "difficulty",
+        "gamesPlayed",
+        "round1Score",
+        "round2Score",
+        "round3Score",
+        "isPublic",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "DailyLeaderboardEntry": {
+      "title": "DailyLeaderboardEntry",
+      "description": "Immutable daily basket score submission keyed by YYYY-MM-DD_uid (contains no PII).",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "Firebase Auth UID of the player."
+        },
+        "displayName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40,
+          "description": "Display name shown on the daily leaderboard."
+        },
+        "dailyDate": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 10,
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+          "description": "UTC date string YYYY-MM-DD of the Daily Basket."
+        },
+        "difficulty": {
+          "type": "string",
+          "enum": ["easy", "medium", "hard"],
+          "description": "Difficulty played for the daily run."
+        },
+        "totalScore": {
+          "type": "number",
+          "description": "Total 3-round score (0 to 3750)."
+        },
+        "avgErrorPct": {
+          "type": "number",
+          "description": "Average percentage error across all 3 rounds (0 to 100)."
+        },
+        "round1Score": {
+          "type": "number",
+          "description": "1-item round score (0 to 1250)."
+        },
+        "round2Score": {
+          "type": "number",
+          "description": "3-item round score (0 to 1250)."
+        },
+        "round3Score": {
+          "type": "number",
+          "description": "5-item round score (0 to 1250)."
+        },
+        "isPublic": {
+          "type": "boolean",
+          "description": "Always true for public daily leaderboard visibility."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when daily run was recorded."
+        }
+      },
+      "required": [
+        "uid",
+        "displayName",
+        "dailyDate",
+        "difficulty",
+        "totalScore",
+        "avgErrorPct",
+        "round1Score",
+        "round2Score",
+        "round3Score",
+        "isPublic",
+        "createdAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Private player statistics owned strictly by the authenticated user."
+    },
+    "/leaderboard/{userId}": {
+      "schema": { "$ref": "#/entities/LeaderboardEntry" },
+      "description": "All-time global leaderboard storing each player's highest 3-round score."
+    },
+    "/dailyLeaderboard/{entryId}": {
+      "schema": { "$ref": "#/entities/DailyLeaderboardEntry" },
+      "description": "Daily Basket global leaderboard storing immutable per-day runs keyed by YYYY-MM-DD_uid."
+    }
+  }
+}
